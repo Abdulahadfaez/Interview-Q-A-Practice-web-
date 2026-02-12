@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Interview Preparation App</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #eef2f3;
+    margin: 0;
+}
+
+.container {
+    width: 400px;
+    margin: 80px auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.hidden {
+    display: none;
+}
+
+button {
+    background: #1976d2;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 8px;
+}
+
+button:hover {
+    background: #0d47a1;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+}
+
+.menu button {
+    margin: 6px 0;
+}
+
+.question-box {
+    background: #e3f2fd;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div class="container" id="loginPage">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <p>Use <b>admin / admin</b></p>
+</div>
+
+<!-- DASHBOARD -->
+<div class="container hidden" id="dashboard">
+    <h2>Interview Preparation</h2>
+    <div class="menu">
+        <button onclick="openAptitude()">Aptitude</button>
+        <button onclick="openSection('system')">System Design</button>
+        <button onclick="openSection('network')">Networking</button>
+        <button onclick="openSection('os')">Operating Systems</button>
+        <button onclick="openSection('java')">Java</button>
+        <button onclick="logout()">Logout</button>
+    </div>
+</div>
+
+<!-- NORMAL QUESTION PAGE -->
+<div class="container hidden" id="questionPage">
+    <h3 id="sectionTitle"></h3>
+    <div class="question-box">
+        <p id="question"></p>
+    </div>
+    <textarea placeholder="Type your answer..."></textarea>
+    <button onclick="showAnswer()">Show Answer</button>
+    <button onclick="nextQuestion()">Next</button>
+    <button onclick="back()">Back</button>
+    <p id="correctAnswer" style="color:green;font-weight:bold;"></p>
+</div>
+
+<!-- APTITUDE LEVEL PAGE -->
+<div class="container hidden" id="levelPage">
+    <h3 id="levelTitle"></h3>
+    <div class="question-box">
+        <p id="levelQuestion"></p>
+    </div>
+    <button onclick="nextLevelQuestion()">Next Question</button>
+    <button onclick="completeLevel()">Complete Level</button>
+</div>
+
+<script>
+// LOGIN
+function login() {
+    let u = username.value;
+    let p = password.value;
+    if (u === "admin" && p === "admin") {
+        loginPage.classList.add("hidden");
+        dashboard.classList.remove("hidden");
+    } else {
+        alert("Invalid Login");
+    }
+}
+
+function logout() {
+    location.reload();
+}
+
+// DATA
+const data = {
+    system: [{ q: "What is system design?", a: "Designing system architecture." }],
+    network: [{ q: "What is TCP?", a: "Transmission Control Protocol." }],
+    os: [{ q: "What is OS?", a: "Manages hardware and software." }],
+    java: [{ q: "What is Java?", a: "Object-oriented language." }]
+};
+
+let currentSection = "", index = 0;
+
+// NORMAL SECTIONS
+function openSection(section) {
+    currentSection = section;
+    index = 0;
+    dashboard.classList.add("hidden");
+    questionPage.classList.remove("hidden");
+    sectionTitle.innerText = section.toUpperCase();
+    loadQuestion();
+}
+
+function loadQuestion() {
+    question.innerText = data[currentSection][index].q;
+    correctAnswer.innerText = "";
+}
+
+function nextQuestion() {
+    index = (index + 1) % data[currentSection].length;
+    loadQuestion();
+}
+
+function showAnswer() {
+    correctAnswer.innerText = "Answer: " + data[currentSection][index].a;
+}
+
+function back() {
+    questionPage.classList.add("hidden");
+    dashboard.classList.remove("hidden");
+}
+
+// APTITUDE LEVELS
+const aptitudeLevels = [
+    { level: 1, age: "12–16", questions: ["10% of 200?", "Average of 2 and 4?"] },
+    { level: 2, age: "17–20", questions: ["If A:B = 2:3 and B=15, find A"] },
+    { level: 3, age: "21+", questions: ["Work done in 10 days. Rate?"] }
+];
+
+let unlockedLevel = 1, levelIndex = 0, qIndex = 0, badges = [];
+
+function openAptitude() {
+    dashboard.classList.add("hidden");
+    levelPage.classList.remove("hidden");
+    levelIndex = unlockedLevel - 1;
+    qIndex = 0;
+    loadLevel();
+}
+
+function loadLevel() {
+    let l = aptitudeLevels[levelIndex];
+    levelTitle.innerText = `Aptitude Level ${l.level} (Age ${l.age})`;
+    levelQuestion.innerText = l.questions[qIndex];
+}
+
+function nextLevelQuestion() {
+    let l = aptitudeLevels[levelIndex];
+    qIndex = (qIndex + 1) % l.questions.length;
+    loadLevel();
+}
+
+function completeLevel() {
+    badges.push("Level " + aptitudeLevels[levelIndex].level + " Badge");
+    unlockedLevel++;
+    alert("Level Completed! Badge Earned!");
+
+    if (unlockedLevel > aptitudeLevels.length) {
+        alert("All Levels Completed!\nBadges: " + badges.join(", "));
+        levelPage.classList.add("hidden");
+        dashboard.classList.remove("hidden");
+        return;
+    }
+    levelIndex++;
+    qIndex = 0;
+    loadLevel();
+}
+</script>
+
+</body>
+</html>
