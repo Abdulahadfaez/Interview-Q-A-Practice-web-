@@ -236,7 +236,7 @@ The database comes pre-populated with sample questions across all categories and
 
 ### CORS Errors
 - Backend must be running on `http://localhost:5000`
-- Frontend must be accessed from `http://localhost:8000` or `file://` protocol
+- Frontend must be accessed from `http://localhost:8000` or `file://` protocol 
 
 ### Database Not Initializing
 - Close the backend server

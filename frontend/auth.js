@@ -13,6 +13,11 @@ class AuthManager {
 
         const { origin, protocol, hostname } = window.location;
         const isLocalHost = ['localhost', '127.0.0.1'].includes(hostname);
+        const isFileProtocol = protocol === 'file:';
+
+        if (isFileProtocol) {
+            return 'http://localhost:5000';
+        }
 
         if (!isLocalHost) {
             return origin;
@@ -24,15 +29,38 @@ class AuthManager {
     }
 
     async fetchJson(url, options = {}, fallbackMessage = 'Unable to connect to the server.') {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
         let response;
 
         try {
-            response = await fetch(url, options);
+            response = await fetch(url, {
+                ...options,
+                signal: controller.signal,
+                headers: {
+                    Accept: 'application/json',
+                    ...(options.headers || {})
+                }
+            });
         } catch (error) {
+            if (error.name === 'AbortError') {
+                throw new Error('Request timed out. Please check your network and try again.');
+            }
             throw new Error(`${fallbackMessage} Make sure the backend is running on ${this.API_URL}.`);
+        } finally {
+            clearTimeout(timeout);
         }
 
         return response;
+    }
+
+    async parseJsonResponse(response) {
+        const text = await response.text();
+        try {
+            return JSON.parse(text);
+        } catch (error) {
+            throw new Error(`Server response was not valid JSON: ${text}`);
+        }
     }
 
     // Secure token storage with encryption (basic implementation)
@@ -113,10 +141,11 @@ class AuthManager {
             }, 'Session refresh failed.');
 
             if (!response.ok) {
-                throw new Error('Token refresh failed');
+                const error = await this.parseJsonResponse(response);
+                throw new Error(error.error || error.message || 'Token refresh failed');
             }
 
-            const data = await response.json();
+            const data = await this.parseJsonResponse(response);
             this.setToken(data.token);
             this.setRefreshToken(data.refreshToken);
             return data.token;
@@ -134,6 +163,7 @@ class AuthManager {
             const headers = {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
+                Accept: 'application/json',
                 ...options.headers
             };
 
@@ -170,11 +200,11 @@ class AuthManager {
         }, 'Login failed.');
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Login failed');
+            const error = await this.parseJsonResponse(response);
+            throw new Error(error.error || error.message || 'Login failed');
         }
 
-        const data = await response.json();
+        const data = await this.parseJsonResponse(response);
         this.setToken(data.token);
         this.setRefreshToken(data.refreshToken);
         localStorage.setItem('userId', data.userId);
@@ -192,11 +222,11 @@ class AuthManager {
         }, 'Registration failed.');
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Registration failed');
+            const error = await this.parseJsonResponse(response);
+            throw new Error(error.error || error.message || 'Registration failed');
         }
 
-        const data = await response.json();
+        const data = await this.parseJsonResponse(response);
         this.setToken(data.token);
         this.setRefreshToken(data.refreshToken);
         localStorage.setItem('userId', data.userId);

@@ -18,7 +18,7 @@ const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'your-refresh-s
 const REFRESH_TOKEN_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN || '7d'; // Refresh token expires in 7 days
 
 // Middleware
-const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || 'http://localhost:8000,http://localhost:3000,http://127.0.0.1:8000,http://127.0.0.1:3000')
+const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || 'http://localhost:8000,http://localhost:3000,http://localhost:5000,http://127.0.0.1:8000,http://127.0.0.1:3000,http://127.0.0.1:5000')
   .split(',')
   .map(origin => origin.trim())
   .filter(Boolean);
@@ -26,7 +26,12 @@ const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL ||
 app.use(cors({
   origin: (origin, callback) => {
     // Allow non-browser tools and local file-based testing.
-    if (!origin || origin === 'null' || allowedOrigins.includes(origin)) {
+    if (!origin || origin === 'null') {
+      return callback(null, true);
+    }
+
+    // Allow local development origins automatically.
+    if (allowedOrigins.includes(origin) || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
       return callback(null, true);
     }
 
@@ -445,6 +450,7 @@ app.get(/^(?!\/(auth|categories|levels|questions|submit-quiz|badges|progress|hea
 function startServer(port = process.env.PORT || 5000) {
   return app.listen(port, () => {
     console.log(`Server running on port ${port}`);
+    console.log(`\n  ➜  Local: http://localhost:${port}/\n`);
   });
 }
 

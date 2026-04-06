@@ -48,13 +48,19 @@ function createSqliteAdapter() {
   return {
     dialect: 'sqlite',
     run(sql, params, callback) {
-      return sqliteDb.run(sql, params, callback);
+      const values = typeof params === 'function' || params == null ? [] : params;
+      const cb = typeof params === 'function' ? params : callback;
+      return sqliteDb.run(sql, values, cb);
     },
     get(sql, params, callback) {
-      return sqliteDb.get(sql, params, callback);
+      const values = typeof params === 'function' || params == null ? [] : params;
+      const cb = typeof params === 'function' ? params : callback;
+      return sqliteDb.get(sql, values, cb);
     },
     all(sql, params, callback) {
-      return sqliteDb.all(sql, params, callback);
+      const values = typeof params === 'function' || params == null ? [] : params;
+      const cb = typeof params === 'function' ? params : callback;
+      return sqliteDb.all(sql, values, cb);
     }
   };
 }
